@@ -1,11 +1,35 @@
-#ifndef DETECTRESULT_H
-#define DETECTRESULT_H
+#ifndef DETECTIONRESULT_H
+#define DETECTIONRESULT_H
+#include <vector>
+#include <string>
 
 
-class DetectResult
+class DetectionResult
 {
 public:
-    DetectResult();
+    DetectionResult();
+
+    //Setters
+    void setDetectionLabel(int label);
+    void setDetectionScore(float score);
+    void setDetectionYmin(float ymin);
+    void setDetectionXmin(float xmin);
+    void setDetectionYmax(float ymax);
+    void setDetectionXmax(float xmax);
+
+    //Getters
+
+    // methods
+
+    std::string SerializeDetection();
+
+private:
+    std::vector<int> label;
+    std::vector<float> score;
+    std::vector<float> ymin;
+    std::vector<float> xmin;
+    std::vector<float> ymax;
+    std::vector<float> xmax;
 };
 
-#endif // DETECTRESULT_H
+#endif // DETECTIONRESULT_H

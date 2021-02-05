@@ -1,8 +1,8 @@
-#include <QCoreApplication>
+#include <vehicledetector.h>
+#include <iostream>
 
-int main(int argc, char *argv[])
+int main()
 {
-    QCoreApplication a(argc, argv);
+    VehicleDetector *obj = new VehicleDetector("/home/willian/PycharmProjects/tensorflow-yolov4-tflite/data/yolov4.tflite", false);
 
-    return a.exec();
 }

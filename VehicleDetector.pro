@@ -21,7 +21,9 @@ SOURCES += \
 
 LIBS += \
         -ltensorflow \
-        -lopencv_core
+        -ltensorflow-lite \
+        -lopencv_core \
+        -ldl
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

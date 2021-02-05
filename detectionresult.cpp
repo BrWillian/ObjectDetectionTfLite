@@ -1,6 +1,6 @@
-#include "detectresult.h"
+#include "detectionresult.h"
 
-DetectResult::DetectResult()
+DetectionResult::DetectionResult()
 {
 
 }

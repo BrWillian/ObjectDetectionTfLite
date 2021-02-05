@@ -1,0 +1,91 @@
+#include "vehicledetector.h"
+
+VehicleDetector::VehicleDetector(const char *tfliteModel, bool quantized)
+{
+    m_modelQuantized = quantized;
+    initDetectionModel(tfliteModel);
+}
+VehicleDetector::VehicleDetector()
+{
+    m_modelQuantized = false;
+    initDetectionModel(WEIGHTS_PATH);
+}
+void VehicleDetector::initDetectionModel(const char *tfliteModel)
+{
+    tflite::StderrReporter error_reporter;
+    m_model = tflite::FlatBufferModel::BuildFromFile(tfliteModel, &error_reporter);
+
+    if(m_model == nullptr){
+        std::cout<<"Failed to load model"<<std::endl;
+        return;
+    }
+
+    // build the interpreter
+
+    tflite::ops::builtin::BuiltinOpResolver resolver;
+    tflite::InterpreterBuilder builder(*m_model, resolver);
+    builder(&m_interpreter);
+
+    if(m_interpreter == nullptr)
+    {
+        std::cout<<"Failed to create interpreter"<<std::endl;
+        return;
+    }
+
+    // Allocate tensor budders.
+
+    if(m_interpreter->AllocateTensors() != kTfLiteOk)
+    {
+        std::cout<<"Failed to allocate tensors"<<std::endl;
+        return;
+    }
+
+    m_interpreter->SetNumThreads(8);
+
+    // Find input tensors
+    if(m_interpreter->inputs().size() != 1)
+    {
+        std::cout<<"Detection model graph needs to have 1 and only 1 input"<<std::endl;
+    }
+
+    m_input_tensor = m_interpreter->tensor(m_interpreter->inputs()[0]);
+    if(m_modelQuantized && m_input_tensor->type != kTfLiteUInt8)
+    {
+        std::cout<<"Detection model input should be Uint8"<<std::endl;
+        return;
+    }
+
+    if(!m_modelQuantized && m_input_tensor->type != kTfLiteFloat16)
+    {
+        std::cout<<"Detection model input should be Float16"<<std::endl;
+        return;
+    }
+
+    if(!m_modelQuantized && m_input_tensor->type != kTfLiteFloat32)
+    {
+        std::cout<<"Detection model input should be Float32"<<std::endl;
+        return;
+    }
+
+    if(m_input_tensor->dims->data[0] != 1 || m_input_tensor->dims->data[1] != DETECTION_MODEL_SIZE ||
+            m_input_tensor->dims->data[2] != DETECTION_MODEL_SIZE ||
+            m_input_tensor->dims->data[3] != DETECTION_MODEL_CHANNELS)
+    {
+        std::cout<<"Detection model must have input dims of ("<<DETECTION_MODEL_SIZE<<","<<DETECTION_MODEL_SIZE<<","<<DETECTION_MODEL_CHANNELS<<std::endl;
+        return;
+    }
+
+    // Find output tensors
+    if(m_interpreter->outputs().size() != 4)
+    {
+        std::cout<<"Detection model graph needs to have 4 and only 4 outputs"<<std::endl;
+        return;
+    }
+    
+    m_output_locations = m_interpreter->tensor(m_interpreter->outputs()[0]);
+    m_output_classes = m_interpreter->tensor(m_interpreter->outputs()[1]);
+    m_output_scores = m_interpreter->tensor(m_interpreter->outputs()[2]);
+    m_num_detections = m_interpreter->tensor(m_interpreter->outputs()[3]);
+    
+    m_hasDetectionModel = true;    
+}
